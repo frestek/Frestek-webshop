@@ -1,0 +1,13 @@
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\bin\Debug\ProductColorsViewer.exe.config
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\bin\Debug\ProductColorsViewer.exe
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\bin\Debug\ProductColorsViewer.pdb
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\bin\Debug\Newtonsoft.Json.dll
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\bin\Debug\Newtonsoft.Json.xml
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.csproj.AssemblyReference.cache
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.Form1.resources
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.Properties.Resources.resources
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.csproj.GenerateResource.cache
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.csproj.CoreCompileInputs.cache
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductC.4A505698.Up2Date
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.exe
+C:\Users\akos2\Downloads\ProductColorsViewer\ProductColorsViewer\obj\Debug\ProductColorsViewer.pdb
