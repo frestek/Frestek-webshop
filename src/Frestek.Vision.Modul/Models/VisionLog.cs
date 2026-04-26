@@ -14,6 +14,7 @@ namespace Frestek.Vision.Modul.Models
         public int RecommendedColorID { get; set; }
         public string RecommendedProductName { get; set; }
         public string ColorGroup { get; set; }
+        public decimal PriceHUF { get; set; } 
         public string UserName { get; set; }
         public DateTime CreatedDate { get; set; }
     }
