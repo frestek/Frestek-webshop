@@ -1,4 +1,4 @@
-/* 1. Referencia színek táblája (Hotcakes SKU integrációval) */
+/* 1. Referencia színek táblája - 8 színcsoportos verzió */
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = '{databaseOwner}{objectQualifier}Frestek_ProductColors' AND user_name(uid) = 'dbo')
 BEGIN
     CREATE TABLE {databaseOwner}{objectQualifier}Frestek_ProductColors (
@@ -8,11 +8,12 @@ BEGIN
         [ProductSKU] NVARCHAR(50) NOT NULL, 
         [HexCode] NVARCHAR(7) NOT NULL,
         [PriceHUF] DECIMAL(18, 2) NOT NULL,
+        [ColorGroup] NVARCHAR(50), 
         CONSTRAINT [PK_{objectQualifier}Frestek_ProductColors] PRIMARY KEY CLUSTERED ([ColorID] ASC)
     );
 END
 
-/* 2. Keresési mentés tábla */
+/* 2. Keresési napló tábla - Bővítve statisztikához és Dashboardhoz */
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = '{databaseOwner}{objectQualifier}Frestek_VisionLog' AND user_name(uid) = 'dbo')
 BEGIN
     CREATE TABLE {databaseOwner}{objectQualifier}Frestek_VisionLog (
@@ -20,6 +21,9 @@ BEGIN
         [ModuleId] INT NOT NULL,
         [DetectedHex] NVARCHAR(7) NOT NULL,
         [RecommendedColorID] INT NOT NULL,
+        [RecommendedProductName] NVARCHAR(150),
+        [ColorGroup] NVARCHAR(50),
+        [UserName] NVARCHAR(100),
         [CreatedDate] DATETIME NOT NULL DEFAULT GETDATE(),
         CONSTRAINT [PK_{objectQualifier}Frestek_VisionLog] PRIMARY KEY CLUSTERED ([LogID] ASC)
     );
