@@ -1,53 +1,52 @@
-/* Megjegyzés: A ModuleId-t 0-ra állítjuk, a DNN ezt a telepítés után kezeli. */
-/* A ProductSKU formátuma: PNT (Paint) - SZÍN - SORSZÁM */
-
-INSERT INTO {databaseOwner}{objectQualifier}Frestek_ProductColors (ModuleId, ProductName, ProductSKU, HexCode, PriceHUF)
+INSERT INTO {databaseOwner}{objectQualifier}Frestek_ProductColors 
+(ModuleId, ProductName, ProductSKU, HexCode, PriceHUF, ColorGroup)
 VALUES 
--- Vörösek és Narancsok
-(0, 'Klasszikus Piros', 'PNT-RED-01', '#FF0000', 4990.00),
-(0, 'Bordó', 'PNT-RED-02', '#800000', 5200.00),
-(0, 'Tűzpiros', 'PNT-RED-03', '#E34234', 5100.00),
-(0, 'Narancssárga', 'PNT-ORN-01', '#FFA500', 4800.00),
-(0, 'Borostyán', 'PNT-ORN-02', '#FFBF00', 4900.00),
-(0, 'Terrakotta', 'PNT-ORN-03', '#E2725B', 5500.00),
--- Sárgák
-(0, 'Napsárga', 'PNT-YEL-01', '#FFFF00', 4500.00),
-(0, 'Aranysárga', 'PNT-YEL-02', '#FFD700', 5300.00),
-(0, 'Citromsárga', 'PNT-YEL-03', '#FFF700', 4600.00),
-(0, 'Okker', 'PNT-YEL-04', '#CCAA2B', 4800.00),
--- Zöldek
-(0, 'Fűzöld', 'PNT-GRN-01', '#008000', 4700.00),
-(0, 'Lime', 'PNT-GRN-02', '#00FF00', 4700.00),
-(0, 'Olajzöld', 'PNT-GRN-03', '#808000', 4900.00),
-(0, 'Mentazöld', 'PNT-GRN-04', '#98FF98', 4500.00),
-(0, 'Smaragdzöld', 'PNT-GRN-05', '#50C878', 5800.00),
-(0, 'Mohazöld', 'PNT-GRN-06', '#4F7942', 5100.00),
--- Kékek
-(0, 'Mélykék', 'PNT-BLU-01', '#0000FF', 5200.00),
-(0, 'Égkék', 'PNT-BLU-02', '#87CEEB', 4600.00),
-(0, 'Királykék', 'PNT-BLU-03', '#4169E1', 5400.00),
-(0, 'Sötétkék', 'PNT-BLU-04', '#00008B', 5300.00),
-(0, 'Türkizkék', 'PNT-BLU-05', '#40E0D0', 5100.00),
-(0, 'Azúrkék', 'PNT-BLU-06', '#007FFF', 4990.00),
--- Lilák és Magenták
-(0, 'Lila', 'PNT-PUR-01', '#800080', 5600.00),
-(0, 'Levendula', 'PNT-PUR-02', '#E6E6FA', 4400.00),
-(0, 'Ibolya', 'PNT-PUR-03', '#EE82EE', 5200.00),
-(0, 'Magenta', 'PNT-MAG-01', '#FF00FF', 5500.00),
-(0, 'Púder Rózsaszín', 'PNT-PNK-01', '#FFC0CB', 4300.00),
--- Földszínek és Barnák
-(0, 'Csokoládébarna', 'PNT-BRN-01', '#4B3621', 4900.00),
-(0, 'Bézs', 'PNT-BRN-02', '#F5F5DC', 4200.00),
-(0, 'Kávébarna', 'PNT-BRN-03', '#6F4E37', 4800.00),
-(0, 'Homokszín', 'PNT-BRN-04', '#C2B280', 4500.00),
--- Neutrálisak
-(0, 'Hófehér', 'PNT-NEU-01', '#FFFFFF', 3990.00),
-(0, 'Éjfekete', 'PNT-NEU-02', '#000000', 5900.00),
-(0, 'Középszürke', 'PNT-NEU-03', '#808080', 4600.00),
-(0, 'Ezüstszürke', 'PNT-NEU-04', '#C0C0C0', 5800.00),
-(0, 'Antracit', 'PNT-NEU-05', '#383E42', 5400.00),
-(0, 'Elefántcsont', 'PNT-NEU-06', '#FFFFF0', 4400.00),
-(0, 'Platinalila', 'PNT-NEU-07', '#E5E4E2', 5100.00),
-(0, 'Gipszszürke', 'PNT-NEU-08', '#A9A9A9', 4600.00),
-(0, 'Krém', 'PNT-NEU-09', '#FFFDD0', 4300.00);
+-- Piros
+(0, 'Klasszikus Piros', 'PNT-RED-01', '#FF0000', 4990.00, 'Piros'),
+(0, 'Bordó', 'PNT-RED-02', '#800000', 5200.00, 'Piros'),
+(0, 'Tűzpiros', 'PNT-RED-03', '#E34234', 5100.00, 'Piros'),
+-- Narancssárga
+(0, 'Narancssárga', 'PNT-ORN-01', '#FFA500', 4800.00, 'Narancssárga'),
+(0, 'Borostyán', 'PNT-ORN-02', '#FFBF00', 4900.00, 'Narancssárga'),
+(0, 'Terrakotta', 'PNT-ORN-03', '#E2725B', 5500.00, 'Narancssárga'),
+-- Sárga
+(0, 'Napsárga', 'PNT-YEL-01', '#FFFF00', 4500.00, 'Sárga'),
+(0, 'Aranysárga', 'PNT-YEL-02', '#FFD700', 5300.00, 'Sárga'),
+(0, 'Citromsárga', 'PNT-YEL-03', '#FFF700', 4600.00, 'Sárga'),
+(0, 'Okker', 'PNT-YEL-04', '#CCAA2B', 4800.00, 'Sárga'),
+-- Zöld
+(0, 'Fűzöld', 'PNT-GRN-01', '#008000', 4700.00, 'Zöld'),
+(0, 'Lime', 'PNT-GRN-02', '#00FF00', 4700.00, 'Zöld'),
+(0, 'Olajzöld', 'PNT-GRN-03', '#808000', 4900.00, 'Zöld'),
+(0, 'Mentazöld', 'PNT-GRN-04', '#98FF98', 4500.00, 'Zöld'),
+(0, 'Smaragdzöld', 'PNT-GRN-05', '#50C878', 5800.00, 'Zöld'),
+(0, 'Mohazöld', 'PNT-GRN-06', '#4F7942', 5100.00, 'Zöld'),
+-- Kék
+(0, 'Mélykék', 'PNT-BLU-01', '#0000FF', 5200.00, 'Kék'),
+(0, 'Égkék', 'PNT-BLU-02', '#87CEEB', 4600.00, 'Kék'),
+(0, 'Királykék', 'PNT-BLU-03', '#4169E1', 5400.00, 'Kék'),
+(0, 'Sötétkék', 'PNT-BLU-04', '#00008B', 5300.00, 'Kék'),
+(0, 'Türkizkék', 'PNT-BLU-05', '#40E0D0', 5100.00, 'Kék'),
+(0, 'Azúrkék', 'PNT-BLU-06', '#007FFF', 4990.00, 'Kék'),
+-- Lila
+(0, 'Lila', 'PNT-PUR-01', '#800080', 5600.00, 'Lila'),
+(0, 'Levendula', 'PNT-PUR-02', '#E6E6FA', 4400.00, 'Lila'),
+(0, 'Ibolya', 'PNT-PUR-03', '#EE82EE', 5200.00, 'Lila'),
+(0, 'Magenta', 'PNT-MAG-01', '#FF00FF', 5500.00, 'Lila'),
+(0, 'Púder Rózsaszín', 'PNT-PNK-01', '#FFC0CB', 4300.00, 'Lila'),
+-- Barna
+(0, 'Csokoládébarna', 'PNT-BRN-01', '#4B3621', 4900.00, 'Barna'),
+(0, 'Bézs', 'PNT-BRN-02', '#F5F5DC', 4200.00, 'Barna'),
+(0, 'Kávébarna', 'PNT-BRN-03', '#6F4E37', 4800.00, 'Barna'),
+(0, 'Homokszín', 'PNT-BRN-04', '#C2B280', 4500.00, 'Barna'),
+-- Semleges
+(0, 'Hófehér', 'PNT-NEU-01', '#FFFFFF', 3990.00, 'Semleges'),
+(0, 'Éjfekete', 'PNT-NEU-02', '#000000', 5900.00, 'Semleges'),
+(0, 'Középszürke', 'PNT-NEU-03', '#808080', 4600.00, 'Semleges'),
+(0, 'Ezüstszürke', 'PNT-NEU-04', '#C0C0C0', 5800.00, 'Semleges'),
+(0, 'Antracit', 'PNT-NEU-05', '#383E42', 5400.00, 'Semleges'),
+(0, 'Elefántcsont', 'PNT-NEU-06', '#FFFFF0', 4400.00, 'Semleges'),
+(0, 'Platinalila', 'PNT-NEU-07', '#E5E4E2', 5100.00, 'Semleges'),
+(0, 'Gipszszürke', 'PNT-NEU-08', '#A9A9A9', 4600.00, 'Semleges'),
+(0, 'Krém', 'PNT-NEU-09', '#FFFDD0', 4300.00, 'Semleges');
 GO

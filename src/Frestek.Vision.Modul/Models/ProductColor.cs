@@ -13,5 +13,6 @@ namespace Frestek.Vision.Modul.Models
         public string ProductSKU { get; set; }
         public string HexCode { get; set; }
         public decimal PriceHUF { get; set; }
+        public string ColorGroup { get; set; } 
     }
 }
