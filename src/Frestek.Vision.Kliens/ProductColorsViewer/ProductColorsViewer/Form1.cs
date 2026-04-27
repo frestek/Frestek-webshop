@@ -6,44 +6,44 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
+using System.Windows.Forms.DataVisualization.Charting; // Diagramhoz szükséges!
 
 namespace ProductColorsViewer
 {
     public partial class Form1 : Form
     {
+        // 1. A TE TAILSCALE SZERVERED CÍME
         private static readonly HttpClient _http = new HttpClient
         {
             BaseAddress = new Uri("https://frestek.peacock-shilling.ts.net/")
         };
 
-        // Ebbe a listába mentjük el az összes letöltött adatot, ebből fogunk szűrni
-        private List<ProductColor> _allProducts = new List<ProductColor>();
+        private List<VisionLogEntry> _allLogs = new List<VisionLogEntry>();
 
         public Form1()
         {
             InitializeComponent();
 
-            // 1. Megjelenés beállítása
-            SetupModernUI();          // Az új, globális ablak- és gombdizájn
-            SetupModernGridStyle();   // A táblázat stílusa
+            SetupModernUI();
+            SetupModernGridStyle();
 
-            // 2. Események bekötése
             dataGridView1.CellPainting += DataGridView1_CellPainting;
             btnLoad.Click += async (s, e) => await LoadDataAsync();
             Load += async (s, e) => await LoadDataAsync();
 
-            // 3. ComboBox beállítása
+            // Szűrő ComboBox beállítása
             if (comboBox1 != null)
             {
-                comboBox1.DropDownStyle = ComboBoxStyle.DropDownList; // Csak választani lehessen
+                comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
                 comboBox1.Items.Add("Ajánlott termék");
                 comboBox1.Items.Add("Felhasználó");
                 comboBox1.Items.Add("Észlelt szín");
+                comboBox1.Items.Add("Dátum");
                 comboBox1.SelectedIndex = 0;
                 comboBox1.SelectedIndexChanged += TextBox1_TextChanged;
             }
 
-            // 4. Kereső TextBox bekötése
+            // Szűrő TextBox beállítása
             if (textBox1 != null)
             {
                 textBox1.TextChanged += TextBox1_TextChanged;
@@ -53,11 +53,9 @@ namespace ProductColorsViewer
         // --- MODERN FELÜLET BEÁLLÍTÁSA ---
         private void SetupModernUI()
         {
-            // Háttérszín (nagyon világos szürke, hogy a fehér táblázat kiemelkedjen)
             this.BackColor = System.Drawing.Color.FromArgb(245, 246, 248);
             dataGridView1.BackgroundColor = this.BackColor;
 
-            // Frissítés gomb stílusa
             if (btnLoad != null)
             {
                 btnLoad.FlatStyle = FlatStyle.Flat;
@@ -70,19 +68,28 @@ namespace ProductColorsViewer
                 btnLoad.Width = 120;
             }
 
-            // ComboBox stílusa
+            if (statbtn != null)
+            {
+                statbtn.FlatStyle = FlatStyle.Flat;
+                statbtn.FlatAppearance.BorderSize = 0;
+                statbtn.BackColor = System.Drawing.Color.FromArgb(21, 76, 89);
+                statbtn.ForeColor = System.Drawing.Color.White;
+                statbtn.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+                statbtn.Cursor = Cursors.Hand;
+                statbtn.Height = 40;
+                statbtn.Width = 120;
+            }
+
             if (comboBox1 != null)
             {
                 comboBox1.FlatStyle = FlatStyle.Flat;
                 comboBox1.Font = new System.Drawing.Font("Segoe UI", 10F);
             }
 
-            // TextBox stílusa és Vízjel (Placeholder) logikája
             if (textBox1 != null)
             {
                 textBox1.BorderStyle = BorderStyle.FixedSingle;
                 textBox1.Font = new System.Drawing.Font("Segoe UI", 10F);
-
                 textBox1.Text = "Keresés...";
                 textBox1.ForeColor = System.Drawing.Color.Gray;
 
@@ -102,15 +109,14 @@ namespace ProductColorsViewer
                 };
             }
 
-            // Főcím (Label) megkeresése és formázása
-            Label lblTitle = this.Controls.OfType<Label>().FirstOrDefault(l => l.Text != null && l.Text.Contains("Ajánláskezelő"));
+            Label lblTitle = this.Controls.OfType<Label>()
+                .FirstOrDefault(l => l.Text != null && l.Text.Contains("Ajánláskezelő"));
             if (lblTitle != null)
             {
                 lblTitle.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
                 lblTitle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             }
 
-            // Árfolyam kiírás (label2) formázása
             if (label2 != null)
             {
                 label2.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Italic);
@@ -118,32 +124,39 @@ namespace ProductColorsViewer
             }
         }
 
-        // --- SZŰRÉS A TEXTBOX ÉS A COMBOBOX ALAPJÁN ---
+        // --- SZŰRÉS LOGIKÁJA ---
         private void TextBox1_TextChanged(object sender, EventArgs e)
         {
-            if (_allProducts == null || _allProducts.Count == 0) return;
+            if (_allLogs == null || _allLogs.Count == 0) return;
 
             string filterText = textBox1.Text.ToLower();
 
-            // Ha a placeholder szöveg van benne, akkor úgy vesszük, mintha üres lenne
             if (filterText == "keresés...") filterText = "";
 
             if (string.IsNullOrWhiteSpace(filterText))
             {
-                dataGridView1.DataSource = _allProducts;
+                dataGridView1.DataSource = _allLogs;
             }
             else
             {
                 string kivalasztottOszlop = comboBox1.SelectedItem?.ToString();
 
-                var filteredList = _allProducts.Where(p =>
+                var filteredList = _allLogs.Where(p =>
                 {
                     if (kivalasztottOszlop == "Ajánlott termék")
-                        return p.ProductName != null && p.ProductName.ToLower().Contains(filterText);
+                        return p.RecommendedProductName != null &&
+                               p.RecommendedProductName.ToLower().Contains(filterText);
+
                     else if (kivalasztottOszlop == "Felhasználó")
-                        return p.OrderId != null && p.OrderId.ToLower().Contains(filterText);
+                        return p.UserName != null &&
+                               p.UserName.ToLower().Contains(filterText);
+
                     else if (kivalasztottOszlop == "Észlelt szín")
-                        return p.Color != null && p.Color.ToLower().Contains(filterText);
+                        return p.DetectedHex != null &&
+                               p.DetectedHex.ToLower().Contains(filterText);
+
+                    else if (kivalasztottOszlop == "Dátum")
+                        return p.CreatedDate.ToString("yyyy.MM.dd").Contains(filterText);
 
                     return false;
                 }).ToList();
@@ -154,63 +167,74 @@ namespace ProductColorsViewer
             FormatGridColumns();
         }
 
-        // --- OSZLOPOK FORMÁZÁSA ---
+        // --- DATAGRIDVIEW OSZLOPOK FORMÁZÁSA ÉS SORRENDJE ---
         private void FormatGridColumns()
         {
             if (dataGridView1.Columns.Count == 0) return;
 
-            if (dataGridView1.Columns.Contains("Id")) dataGridView1.Columns["Id"].Visible = false;
+            // Felesleges technikai oszlopok elrejtése
+            if (dataGridView1.Columns.Contains("LogId")) dataGridView1.Columns["LogId"].Visible = false;
+            if (dataGridView1.Columns.Contains("ModuleId")) dataGridView1.Columns["ModuleId"].Visible = false;
+            if (dataGridView1.Columns.Contains("ColorGroup")) dataGridView1.Columns["ColorGroup"].Visible = false;
 
-            if (dataGridView1.Columns.Contains("Datum")) dataGridView1.Columns["Datum"].DisplayIndex = 0;
-            if (dataGridView1.Columns.Contains("OrderId")) dataGridView1.Columns["OrderId"].DisplayIndex = 1;
-            if (dataGridView1.Columns.Contains("Color")) dataGridView1.Columns["Color"].DisplayIndex = 2;
-            if (dataGridView1.Columns.Contains("ProductName")) dataGridView1.Columns["ProductName"].DisplayIndex = 3;
-            if (dataGridView1.Columns.Contains("ArHuf")) dataGridView1.Columns["ArHuf"].DisplayIndex = 4;
+            // Oszlopok sorrendje
+            if (dataGridView1.Columns.Contains("CreatedDate")) dataGridView1.Columns["CreatedDate"].DisplayIndex = 0;
+            if (dataGridView1.Columns.Contains("UserName")) dataGridView1.Columns["UserName"].DisplayIndex = 1;
+            if (dataGridView1.Columns.Contains("DetectedHex")) dataGridView1.Columns["DetectedHex"].DisplayIndex = 2;
+            if (dataGridView1.Columns.Contains("RecommendedProductName")) dataGridView1.Columns["RecommendedProductName"].DisplayIndex = 3;
+            if (dataGridView1.Columns.Contains("PriceHUF")) dataGridView1.Columns["PriceHUF"].DisplayIndex = 4;
             if (dataGridView1.Columns.Contains("ArEur")) dataGridView1.Columns["ArEur"].DisplayIndex = 5;
 
-            if (dataGridView1.Columns.Contains("Datum"))
+            // Oszlopok fejléce és megjelenése
+            if (dataGridView1.Columns.Contains("CreatedDate"))
             {
-                dataGridView1.Columns["Datum"].HeaderText = "Dátum";
-                dataGridView1.Columns["Datum"].DefaultCellStyle.Format = "yyyy.MM.dd";
-            }
-            if (dataGridView1.Columns.Contains("OrderId"))
-                dataGridView1.Columns["OrderId"].HeaderText = "Felhasználó";
-
-            if (dataGridView1.Columns.Contains("Color"))
-                dataGridView1.Columns["Color"].HeaderText = "Észlelt szín";
-
-            if (dataGridView1.Columns.Contains("ProductName"))
-            {
-                dataGridView1.Columns["ProductName"].HeaderText = "Ajánlott termék";
-                dataGridView1.Columns["ProductName"].DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+                dataGridView1.Columns["CreatedDate"].HeaderText = "Dátum";
+                dataGridView1.Columns["CreatedDate"].DefaultCellStyle.Format = "yyyy.MM.dd HH:mm";
             }
 
-            if (dataGridView1.Columns.Contains("ArHuf"))
+            if (dataGridView1.Columns.Contains("UserName"))
+                dataGridView1.Columns["UserName"].HeaderText = "Felhasználó";
+
+            if (dataGridView1.Columns.Contains("DetectedHex"))
             {
-                dataGridView1.Columns["ArHuf"].HeaderText = "Ár (HUF)";
-                dataGridView1.Columns["ArHuf"].DefaultCellStyle.Format = "#,##0 Ft";
-                dataGridView1.Columns["ArHuf"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                dataGridView1.Columns["ArHuf"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dataGridView1.Columns["DetectedHex"].HeaderText = "Észlelt szín";
+                // Észlelt szín oszlop fixálása szélesebbre
+                dataGridView1.Columns["DetectedHex"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dataGridView1.Columns["DetectedHex"].Width = 140;
+            }
+
+            if (dataGridView1.Columns.Contains("RecommendedProductName"))
+            {
+                dataGridView1.Columns["RecommendedProductName"].HeaderText = "Ajánlott krétafesték";
+                dataGridView1.Columns["RecommendedProductName"].DefaultCellStyle.Font =
+                    new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            }
+
+            if (dataGridView1.Columns.Contains("PriceHUF"))
+            {
+                dataGridView1.Columns["PriceHUF"].HeaderText = "Ár (HUF)";
+                dataGridView1.Columns["PriceHUF"].DefaultCellStyle.Format = "#,##0 Ft";
+                dataGridView1.Columns["PriceHUF"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dataGridView1.Columns["PriceHUF"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
 
             if (dataGridView1.Columns.Contains("ArEur"))
             {
                 dataGridView1.Columns["ArEur"].HeaderText = "Ár (EUR)";
-                dataGridView1.Columns["ArEur"].DefaultCellStyle.Format = "0.00 €";
+                dataGridView1.Columns["ArEur"].DefaultCellStyle.Format = "€ 0.00";
                 dataGridView1.Columns["ArEur"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 dataGridView1.Columns["ArEur"].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
 
-            // 1. Alapértelmezetten minden oszlop legyen akkora, amekkora a tartalma
+            // Szélességek automatikus beállítása (a DetectedHex-et ez nem bántja az AutoSizeMode.None miatt)
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
-            // 2. Kivéve a "ProductName" (Ajánlott termék) oszlopot, az töltse ki a maradék helyet!
-            if (dataGridView1.Columns.Contains("ProductName"))
+            if (dataGridView1.Columns.Contains("RecommendedProductName"))
             {
-                dataGridView1.Columns["ProductName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dataGridView1.Columns["RecommendedProductName"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             }
 
-            // Minden oszlop rendezésének kikapcsolása
+            // Rendezettség kikapcsolása
             foreach (DataGridViewColumn column in dataGridView1.Columns)
             {
                 column.SortMode = DataGridViewColumnSortMode.NotSortable;
@@ -245,27 +269,36 @@ namespace ProductColorsViewer
             }
         }
 
-        // --- ADATOK BETÖLTÉSE ---
+        // --- ADATOK BETÖLTÉSE AZ API-BÓL ---
         private async Task LoadDataAsync()
         {
             try
             {
-                var json = await _http.GetStringAsync("DesktopModules/ProductColors/API/ProductColors/GetAll");
-                _allProducts = JsonConvert.DeserializeObject<List<ProductColor>>(json);
+                // A DNN RouteMapper beállítása alapján felépített URL
+                var json = await _http.GetStringAsync("DesktopModules/FrestekVision/API/Vision/GetLogs");
 
+                _allLogs = JsonConvert.DeserializeObject<List<VisionLogEntry>>(json);
+
+                // MNB számítás
                 decimal currentEurRate = GetEurRateFromMNB();
-                if (label2 != null) label2.Text = "1 EUR = " + currentEurRate.ToString("0.00") + " Ft";
+
+                if (label2 != null)
+                    label2.Text = "1 EUR = " + currentEurRate.ToString("0.00") + " Ft";
 
                 if (currentEurRate > 0)
                 {
-                    foreach (var item in _allProducts)
+                    foreach (var item in _allLogs)
                     {
-                        item.ArEur = Math.Round(item.ArHuf / currentEurRate, 2);
+                        item.ArEur = Math.Round(item.PriceHUF / currentEurRate, 2);
                     }
                 }
 
-                dataGridView1.DataSource = _allProducts;
+                // UI Frissítése
+                dataGridView1.DataSource = _allLogs;
                 FormatGridColumns();
+
+                // Diagram frissítése a betöltött adatokból
+                DrawColorGroupChart();
             }
             catch (Exception ex)
             {
@@ -273,7 +306,64 @@ namespace ProductColorsViewer
             }
         }
 
-        // --- DATAGRIDVIEW STÍLUS BEÁLLÍTÁSA ---
+        // --- DIAGRAM RAJZOLÁSA A PANEL1-RE ---
+        private void DrawColorGroupChart()
+        {
+            // Csoportosítjuk az adatokat Színcsoport szerint és megszámoljuk őket
+            var stats = _allLogs
+                .Where(x => !string.IsNullOrWhiteSpace(x.ColorGroup))
+                .GroupBy(x => x.ColorGroup)
+                .Select(g => new { Group = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .ToList();
+
+            if (stats.Count == 0) return;
+
+            // Panel letisztítása
+            panel1.Controls.Clear();
+
+            Chart chart = new Chart();
+            chart.Dock = DockStyle.Fill;
+            chart.BackColor = System.Drawing.Color.White;
+
+            // Rajzterület beállítása
+            ChartArea chartArea = new ChartArea("MainArea");
+            chartArea.BackColor = System.Drawing.Color.Transparent;
+
+            chartArea.AxisX.MajorGrid.Enabled = false;
+            chartArea.AxisX.LabelStyle.Font = new System.Drawing.Font("Segoe UI", 10);
+            chartArea.AxisX.Interval = 1;
+
+            chartArea.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(230, 230, 230);
+            chartArea.AxisY.MajorGrid.LineDashStyle = ChartDashStyle.Dash;
+            chartArea.AxisY.LabelStyle.Font = new System.Drawing.Font("Segoe UI", 10);
+
+            chart.ChartAreas.Add(chartArea);
+
+            // Adatsor létrehozása
+            Series series = new Series("Színcsoportok");
+            series.ChartType = SeriesChartType.Column;
+            series.Color = System.Drawing.Color.FromArgb(21, 76, 89);
+
+            series.IsValueShownAsLabel = true;
+            series.Font = new System.Drawing.Font("Segoe UI", 12, System.Drawing.FontStyle.Bold);
+            series.LabelForeColor = System.Drawing.Color.FromArgb(244, 103, 29);
+
+            foreach (var item in stats)
+            {
+                series.Points.AddXY(item.Group, item.Count);
+            }
+            chart.Series.Add(series);
+
+            Title title = new Title("Színcsoportok eloszlása", Docking.Top,
+                new System.Drawing.Font("Segoe UI", 14, System.Drawing.FontStyle.Bold),
+                System.Drawing.Color.FromArgb(50, 50, 50));
+            chart.Titles.Add(title);
+
+            panel1.Controls.Add(chart);
+        }
+
+        // --- DATAGRIDVIEW ALAP STÍLUSOK ---
         private void SetupModernGridStyle()
         {
             dataGridView1.BackgroundColor = System.Drawing.Color.White;
@@ -293,77 +383,104 @@ namespace ProductColorsViewer
             dataGridView1.ColumnHeadersHeight = 50;
             dataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
 
-            var headerStyle = new DataGridViewCellStyle();
-            headerStyle.SelectionBackColor = System.Drawing.Color.FromArgb(21, 76, 89);
-            headerStyle.SelectionForeColor = System.Drawing.Color.White;
-            headerStyle.BackColor = System.Drawing.Color.FromArgb(21, 76, 89);
-            headerStyle.ForeColor = System.Drawing.Color.White;
-            headerStyle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            headerStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
-            headerStyle.Padding = new Padding(8, 0, 0, 0);
+            var headerStyle = new DataGridViewCellStyle
+            {
+                SelectionBackColor = System.Drawing.Color.FromArgb(21, 76, 89),
+                SelectionForeColor = System.Drawing.Color.White,
+                BackColor = System.Drawing.Color.FromArgb(21, 76, 89),
+                ForeColor = System.Drawing.Color.White,
+                Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold),
+                Alignment = DataGridViewContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0)
+            };
             dataGridView1.ColumnHeadersDefaultCellStyle = headerStyle;
 
-            var cellStyle = new DataGridViewCellStyle();
-            cellStyle.BackColor = System.Drawing.Color.White;
-            cellStyle.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            cellStyle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
-            cellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(240, 245, 248);
-            cellStyle.SelectionForeColor = System.Drawing.Color.Black;
-            cellStyle.Padding = new Padding(8, 0, 0, 0);
+            var cellStyle = new DataGridViewCellStyle
+            {
+                BackColor = System.Drawing.Color.White,
+                ForeColor = System.Drawing.Color.FromArgb(50, 50, 50),
+                Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular),
+                SelectionBackColor = System.Drawing.Color.FromArgb(240, 245, 248),
+                SelectionForeColor = System.Drawing.Color.Black,
+                Padding = new Padding(8, 0, 0, 0)
+            };
             dataGridView1.DefaultCellStyle = cellStyle;
 
             dataGridView1.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(249, 250, 251);
         }
 
-        // --- SZÍNES NÉGYZET RAJZOLÁSA ---
+        // --- SZÍNES NÉGYZET RAJZOLÁSA (HEX KÓD ALAPJÁN) ---
         private void DataGridView1_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dataGridView1.Columns[e.ColumnIndex].Name == "Color")
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dataGridView1.Columns[e.ColumnIndex].Name == "DetectedHex")
             {
+                // Magas minőségű grafika (éles vonalak)
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
                 e.Handled = true;
                 e.PaintBackground(e.CellBounds, true);
 
-                string colorName = e.Value?.ToString() ?? "";
+                string hexCode = e.Value?.ToString() ?? "#FFFFFF";
+                if (!hexCode.StartsWith("#")) hexCode = "#" + hexCode; // Biztosíték, ha lemaradna a hash mark
 
-                System.Drawing.Color boxColor = System.Drawing.Color.Transparent;
-                if (colorName == "Piros") boxColor = System.Drawing.Color.FromArgb(230, 57, 70);
-                else if (colorName == "Zöld") boxColor = System.Drawing.Color.FromArgb(42, 157, 143);
-                else if (colorName == "Sárga") boxColor = System.Drawing.Color.FromArgb(244, 162, 97);
-                else boxColor = System.Drawing.Color.LightGray;
+                System.Drawing.Color boxColor;
+                try
+                {
+                    boxColor = System.Drawing.ColorTranslator.FromHtml(hexCode);
+                }
+                catch
+                {
+                    boxColor = System.Drawing.Color.LightGray; // Alapértelmezett szín, ha érvénytelen a HEX
+                }
 
                 int boxSize = 24;
                 int boxY = e.CellBounds.Y + (e.CellBounds.Height - boxSize) / 2;
                 int boxX = e.CellBounds.X + 15;
 
-                using (System.Drawing.SolidBrush brush = new System.Drawing.SolidBrush(boxColor))
-                {
+                using (var brush = new System.Drawing.SolidBrush(boxColor))
                     e.Graphics.FillRectangle(brush, boxX, boxY, boxSize, boxSize);
-                }
 
-                using (System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.LightGray, 1))
-                {
+                using (var pen = new System.Drawing.Pen(System.Drawing.Color.LightGray, 1))
                     e.Graphics.DrawRectangle(pen, boxX, boxY, boxSize, boxSize);
-                }
 
-                using (System.Drawing.SolidBrush textBrush = new System.Drawing.SolidBrush(e.CellStyle.ForeColor))
+                using (var textBrush = new System.Drawing.SolidBrush(e.CellStyle.ForeColor))
                 {
                     int textX = boxX + boxSize + 10;
                     int textY = e.CellBounds.Y + (e.CellBounds.Height - e.CellStyle.Font.Height) / 2;
-                    e.Graphics.DrawString(colorName, e.CellStyle.Font, textBrush, textX, textY);
+                    e.Graphics.DrawString(hexCode, e.CellStyle.Font, textBrush, textX, textY);
                 }
+            }
+        }
+
+        // Statisztika panel megnyitó/bezáró
+        private void statbtn_Click(object sender, EventArgs e)
+        {
+            if (panel1.Visible)
+            {
+                panel1.Visible = false;
+            }
+            else
+            {
+                panel1.Visible = true;
             }
         }
     }
 
-    // --- ADATMODELL ---
-    public class ProductColor
+    // --- AZ ADATMODELL ---
+    // Pontosan megegyezik az API VisionLog objektumával
+    public class VisionLogEntry
     {
-        public int Id { get; set; }
-        public string ProductName { get; set; }
-        public string Color { get; set; }
-        public string OrderId { get; set; }
-        public int ArHuf { get; set; }
+        public int LogId { get; set; }
+        public int ModuleId { get; set; }
+        public string DetectedHex { get; set; }
+        public string RecommendedProductName { get; set; }
+        public decimal PriceHUF { get; set; }
+        public string ColorGroup { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string UserName { get; set; }
+
+        // Ez csak a kliensben létezik, mi számoljuk ki!
         public decimal ArEur { get; set; }
-        public DateTime Datum { get; set; }
     }
 }
