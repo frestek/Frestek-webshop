@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
-using System.Windows.Forms.DataVisualization.Charting; // Diagramhoz szükséges!
+using System.Windows.Forms.DataVisualization.Charting; // A diagramhoz elengedhetetlen!
 
 namespace ProductColorsViewer
 {
@@ -19,6 +19,11 @@ namespace ProductColorsViewer
         };
 
         private List<VisionLogEntry> _allLogs = new List<VisionLogEntry>();
+
+        // --- ÚJ VÁLTOZÓK A DÁTUMSZŰRŐS DIAGRAMHOZ ---
+        private DateTimePicker dtpChartStart;
+        private DateTimePicker dtpChartEnd;
+        private Chart colorChart;
 
         public Form1()
         {
@@ -297,8 +302,8 @@ namespace ProductColorsViewer
                 dataGridView1.DataSource = _allLogs;
                 FormatGridColumns();
 
-                // Diagram frissítése a betöltött adatokból
-                DrawColorGroupChart();
+                // Diagram és szűrők frissítése a betöltött adatokból
+                SetupChartUI();
             }
             catch (Exception ex)
             {
@@ -306,45 +311,104 @@ namespace ProductColorsViewer
             }
         }
 
-        // --- DIAGRAM RAJZOLÁSA A PANEL1-RE ---
+        // --- DIAGRAM ÉS SZŰRŐK FELÉPÍTÉSE ---
+        private void SetupChartUI()
+        {
+            // Ha már létrehoztuk a gombokat és a diagramot, akkor csak az adatokat frissítjük
+            if (colorChart != null)
+            {
+                DrawColorGroupChart();
+                return;
+            }
+
+            panel1.Controls.Clear();
+
+            // 1. Felső szűrősáv (Panel) létrehozása
+            Panel filterPanel = new Panel { Dock = DockStyle.Top, Height = 50, BackColor = System.Drawing.Color.White };
+
+            Label lblStart = new Label { Text = "Kezdő dátum:", AutoSize = true, Location = new System.Drawing.Point(10, 15) };
+            dtpChartStart = new DateTimePicker { Format = DateTimePickerFormat.Short, Location = new System.Drawing.Point(100, 12), Width = 110 };
+
+            // --- ALAPÉRTELMEZETT KEZDŐ DÁTUM BEÁLLÍTÁSA: 2026.04.26 ---
+            dtpChartStart.Value = new DateTime(2026, 4, 26);
+
+            Label lblEnd = new Label { Text = "Végdátum:", AutoSize = true, Location = new System.Drawing.Point(230, 15) };
+            dtpChartEnd = new DateTimePicker { Format = DateTimePickerFormat.Short, Location = new System.Drawing.Point(300, 12), Width = 110 };
+            dtpChartEnd.Value = DateTime.Now.Date;
+
+            // Szűrés gomb
+            Button btnFilter = new Button { Text = "Szűrés", Location = new System.Drawing.Point(430, 10), Height = 30, Width = 80, BackColor = System.Drawing.Color.FromArgb(21, 76, 89), ForeColor = System.Drawing.Color.White, FlatStyle = FlatStyle.Flat };
+            btnFilter.FlatAppearance.BorderSize = 0;
+            btnFilter.Cursor = Cursors.Hand;
+            btnFilter.Click += (s, e) => DrawColorGroupChart();
+
+            // --- BEZÁRÁS GOMB HOZZÁADÁSA ---
+            Button btnClose = new Button { Text = "Bezárás", Location = new System.Drawing.Point(520, 10), Height = 30, Width = 80, BackColor = System.Drawing.Color.FromArgb(230, 57, 70), ForeColor = System.Drawing.Color.White, FlatStyle = FlatStyle.Flat };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.Cursor = Cursors.Hand;
+            btnClose.Click += (s, e) => panel1.Visible = false; // Eltünteti a panelt!
+
+            filterPanel.Controls.Add(lblStart);
+            filterPanel.Controls.Add(dtpChartStart);
+            filterPanel.Controls.Add(lblEnd);
+            filterPanel.Controls.Add(dtpChartEnd);
+            filterPanel.Controls.Add(btnFilter);
+            filterPanel.Controls.Add(btnClose);
+
+            // 2. Maga a diagram (Chart) inicializálása
+            colorChart = new Chart();
+            colorChart.Dock = DockStyle.Fill;
+            colorChart.BackColor = System.Drawing.Color.White;
+
+            ChartArea chartArea = new ChartArea("MainArea");
+            chartArea.BackColor = System.Drawing.Color.Transparent;
+            chartArea.AxisX.MajorGrid.Enabled = false;
+            chartArea.AxisX.LabelStyle.Font = new System.Drawing.Font("Segoe UI", 10);
+            chartArea.AxisX.Interval = 1;
+            chartArea.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(230, 230, 230);
+            chartArea.AxisY.MajorGrid.LineDashStyle = ChartDashStyle.Dash;
+            chartArea.AxisY.LabelStyle.Font = new System.Drawing.Font("Segoe UI", 10);
+            colorChart.ChartAreas.Add(chartArea);
+
+            Title title = new Title("Színcsoportok eloszlása", Docking.Top, new System.Drawing.Font("Segoe UI", 14, System.Drawing.FontStyle.Bold), System.Drawing.Color.FromArgb(50, 50, 50));
+            colorChart.Titles.Add(title);
+
+            // Hozzáadjuk a panel1-hez
+            panel1.Controls.Add(colorChart);
+            panel1.Controls.Add(filterPanel);
+            filterPanel.BringToFront();
+
+            // Első rajzolás
+            DrawColorGroupChart();
+        }
+
+        // --- DIAGRAM RAJZOLÁSA DÁTUM SZŰRÉSSEL ---
         private void DrawColorGroupChart()
         {
-            // Csoportosítjuk az adatokat Színcsoport szerint és megszámoljuk őket
+            if (colorChart == null || dtpChartStart == null || dtpChartEnd == null) return;
+
+            // 1. Dátumhatárok beolvasása
+            DateTime startDate = dtpChartStart.Value.Date;
+            DateTime endDate = dtpChartEnd.Value.Date.AddDays(1).AddTicks(-1);
+
+            // 2. Dátum szerinti szűrés és csoportosítás
             var stats = _allLogs
                 .Where(x => !string.IsNullOrWhiteSpace(x.ColorGroup))
+                .Where(x => x.CreatedDate >= startDate && x.CreatedDate <= endDate) // <-- Dátumszűrés
                 .GroupBy(x => x.ColorGroup)
                 .Select(g => new { Group = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Count)
                 .ToList();
 
+            // 3. Előző oszlopok törlése
+            colorChart.Series.Clear();
+
             if (stats.Count == 0) return;
 
-            // Panel letisztítása
-            panel1.Controls.Clear();
-
-            Chart chart = new Chart();
-            chart.Dock = DockStyle.Fill;
-            chart.BackColor = System.Drawing.Color.White;
-
-            // Rajzterület beállítása
-            ChartArea chartArea = new ChartArea("MainArea");
-            chartArea.BackColor = System.Drawing.Color.Transparent;
-
-            chartArea.AxisX.MajorGrid.Enabled = false;
-            chartArea.AxisX.LabelStyle.Font = new System.Drawing.Font("Segoe UI", 10);
-            chartArea.AxisX.Interval = 1;
-
-            chartArea.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(230, 230, 230);
-            chartArea.AxisY.MajorGrid.LineDashStyle = ChartDashStyle.Dash;
-            chartArea.AxisY.LabelStyle.Font = new System.Drawing.Font("Segoe UI", 10);
-
-            chart.ChartAreas.Add(chartArea);
-
-            // Adatsor létrehozása
+            // 4. Új oszlopok rajzolása
             Series series = new Series("Színcsoportok");
             series.ChartType = SeriesChartType.Column;
             series.Color = System.Drawing.Color.FromArgb(21, 76, 89);
-
             series.IsValueShownAsLabel = true;
             series.Font = new System.Drawing.Font("Segoe UI", 12, System.Drawing.FontStyle.Bold);
             series.LabelForeColor = System.Drawing.Color.FromArgb(244, 103, 29);
@@ -353,14 +417,7 @@ namespace ProductColorsViewer
             {
                 series.Points.AddXY(item.Group, item.Count);
             }
-            chart.Series.Add(series);
-
-            Title title = new Title("Színcsoportok eloszlása", Docking.Top,
-                new System.Drawing.Font("Segoe UI", 14, System.Drawing.FontStyle.Bold),
-                System.Drawing.Color.FromArgb(50, 50, 50));
-            chart.Titles.Add(title);
-
-            panel1.Controls.Add(chart);
+            colorChart.Series.Add(series);
         }
 
         // --- DATAGRIDVIEW ALAP STÍLUSOK ---
@@ -422,7 +479,7 @@ namespace ProductColorsViewer
                 e.PaintBackground(e.CellBounds, true);
 
                 string hexCode = e.Value?.ToString() ?? "#FFFFFF";
-                if (!hexCode.StartsWith("#")) hexCode = "#" + hexCode; // Biztosíték, ha lemaradna a hash mark
+                if (!string.IsNullOrEmpty(hexCode) && !hexCode.StartsWith("#")) hexCode = "#" + hexCode; // Biztosíték, ha lemaradna a hash mark
 
                 System.Drawing.Color boxColor;
                 try
@@ -453,7 +510,7 @@ namespace ProductColorsViewer
             }
         }
 
-        // Statisztika panel megnyitó/bezáró
+        // Statisztika panel megnyitó/bezáró (a gomb, ami megnyitja)
         private void statbtn_Click(object sender, EventArgs e)
         {
             if (panel1.Visible)
@@ -480,7 +537,7 @@ namespace ProductColorsViewer
         public DateTime CreatedDate { get; set; }
         public string UserName { get; set; }
 
-        // Ez csak a kliensben létezik, mi számoljuk ki!
+        // Ez csak a kliensben létezik, mi számoljuk ki az MNB XML-ből!
         public decimal ArEur { get; set; }
     }
 }
