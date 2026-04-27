@@ -2,7 +2,7 @@
 
 <div class="frestek-vision-container">
     <div class="frestek-ui-card">
-        <h2 class="frestek-brand-title">Frestek Vision Színválasztó</h2>
+        <h2 class="frestek-brand-title">Frestek AI Színválasztó</h2>
         <p class="frestek-instruction">Töltsön fel egy fotót az elemzéshez!</p>
 
         <div class="frestek-upload-zone">
@@ -17,11 +17,13 @@
         </div>
 
         <div id="frestek-recommendations" style="display:none; margin-top:30px;">
-            <h3 id="recommendation-header">Ajánlott festékeink:</h3>
+            <h3>Ajánlott festékeink:</h3>
             <div class="product-grid" id="product-grid"></div>
         </div>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
 
 <script type="text/javascript">
     var frestekModuleId = <%=ModuleId%>;
