@@ -21,27 +21,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 previewArea.style.display = 'block';
                 
-                const colors = getThreeDominantColors(ctx, canvas.width, canvas.height);
-                renderColorChoices(colors);
+                // ColorThief használata a domináns színek kinyeréséhez
+                const colorThief = new ColorThief();
+                // A getPalette(img, 3) visszaadja a 3 legmarkánsabb színt RGB tömbökben
+                const palette = colorThief.getPalette(img, 3);
+                const hexColors = palette.map(p => rgbToHex(p[0], p[1], p[2]));
+                
+                renderColorChoices(hexColors);
             };
             img.src = event.target.result;
         };
         reader.readAsDataURL(e.target.files[0]);
     });
-
-    function getThreeDominantColors(ctx, width, height) {
-        const stepY = Math.floor(height / 3);
-        const colors = [];
-        for (let i = 0; i < 3; i++) {
-            const imgData = ctx.getImageData(0, i * stepY, width, stepY).data;
-            let r = 0, g = 0, b = 0, count = 0;
-            for (let j = 0; j < imgData.length; j += 40) {
-                r += imgData[j]; g += imgData[j+1]; b += imgData[j+2]; count++;
-            }
-            colors.push(rgbToHex(Math.floor(r/count), Math.floor(g/count), Math.floor(b/count)));
-        }
-        return colors;
-    }
 
     function rgbToHex(r, g, b) {
         return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1).toUpperCase();
